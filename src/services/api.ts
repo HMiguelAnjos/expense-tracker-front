@@ -29,6 +29,10 @@ export type Expense = {
   title: string;
   amount: number;
   category: string;
+  paymentMethod: string;
+  installments: number;
+  installmentNumber: number;
+  cardId: string | null;
   createdAt: string;
 };
 
@@ -40,16 +44,39 @@ export type Income = {
   createdAt: string;
 };
 
-export type CreateExpenseInput = Omit<Expense, 'id' | 'createdAt'>;
-export type UpdateExpenseInput = Omit<Expense, 'createdAt'>;
+export type Card = {
+  id: string;
+  name: string;
+  lastDigits: string | null;
+  color: string;
+  createdAt: string;
+};
+
+export type CreateExpenseInput = {
+  title: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  installments?: number;
+  cardId?: string | null;
+  createdAt?: string;
+};
+export type UpdateExpenseInput = Omit<Expense, 'createdAt' | 'installmentNumber' | 'installments'>;
 export type CreateIncomeInput = Omit<Income, 'id' | 'createdAt'>;
 export type UpdateIncomeInput = Omit<Income, 'createdAt'>;
+export type CreateCardInput = { name: string; lastDigits?: string; color?: string };
 
 export const expenseService = {
   list: () => api.get<Expense[]>('/expenses').then((r) => r.data),
   create: (data: CreateExpenseInput) => api.post('/expenses', data),
-  update: (id: string, data: CreateExpenseInput) => api.put(`/expenses/${id}`, data),
+  update: (id: string, data: UpdateExpenseInput) => api.put(`/expenses/${id}`, data),
   remove: (id: string) => api.delete(`/expenses/${id}`),
+};
+
+export const cardService = {
+  list: () => api.get<Card[]>('/cards').then((r) => r.data),
+  create: (data: CreateCardInput) => api.post('/cards', data),
+  remove: (id: string) => api.delete(`/cards/${id}`),
 };
 
 export const incomeService = {

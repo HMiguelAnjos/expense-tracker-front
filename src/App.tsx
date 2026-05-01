@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
+import Cards from './pages/Cards';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -24,6 +25,7 @@ export default function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="incomes" element={<Incomes />} />
+                <Route path="cards" element={<Cards />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
