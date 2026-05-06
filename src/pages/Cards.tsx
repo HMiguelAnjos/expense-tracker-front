@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cardService, CreateCardInput } from '../services/api';
+import { cardService } from '../services/api';
+import type { CreateCardInput } from '../services/api';
 import { CreditCard, Plus, Trash2, X } from 'lucide-react';
 
 const PRESET_COLORS = [
