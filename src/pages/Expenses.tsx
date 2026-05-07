@@ -94,7 +94,7 @@ export default function Expenses() {
       });
       setEditing(e); setModal('edit');
     } else {
-      reset({ title: '', amount: 0, category: '', paymentMethod: 'pix', installments: 1, cardId: null, createdAt: todayISO() });
+      reset({ title: '', amount: '' as any, category: '', paymentMethod: 'pix', installments: 1, cardId: null, createdAt: todayISO() });
       setEditing(null); setModal('create');
     }
   }
@@ -255,7 +255,7 @@ export default function Expenses() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="Valor (R$)" error={errors.amount?.message}>
-                <input {...register('amount')} type="number" step="0.01" style={inputSt} placeholder="0,00" />
+                <input {...register('amount')} type="number" step="0.01" style={inputSt} placeholder="0,00" onFocus={(e) => e.target.select()} />
               </Field>
               <Field label="Data" error={errors.createdAt?.message}>
                 <input {...register('createdAt')} type="date" style={inputSt} />

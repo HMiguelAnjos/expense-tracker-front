@@ -51,7 +51,7 @@ export default function Incomes() {
 
   function open(i?: Income) {
     if (i) { reset({ description: i.description, amount: i.amount, source: i.source }); setEditing(i); setModal('edit'); }
-    else { reset({ description: '', amount: 0, source: '' }); setEditing(null); setModal('create'); }
+    else { reset({ description: '', amount: '' as any, source: '' }); setEditing(null); setModal('create'); }
   }
   function close_() { setModal(null); setEditing(null); reset(); }
   function onSubmit(d: Form) {
@@ -174,7 +174,7 @@ export default function Incomes() {
               <input {...register('description')} style={inputSt} placeholder="Ex: Salário de abril" />
             </Field>
             <Field label="Valor (R$)" error={errors.amount?.message}>
-              <input {...register('amount')} type="number" step="0.01" style={inputSt} placeholder="0,00" />
+              <input {...register('amount')} type="number" step="0.01" style={inputSt} placeholder="0,00" onFocus={(e) => e.target.select()} />
             </Field>
             <Field label="Fonte" error={errors.source?.message}>
               <select {...register('source')} style={inputSt}>
