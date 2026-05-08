@@ -91,6 +91,36 @@ export type LoginInput = { email: string; password: string };
 export type RegisterInput = { name: string; email: string; password: string };
 export type AuthResponse = { token: string; user: AuthUser };
 
+export type Saving = {
+  id: string;
+  name: string;
+  description: string | null;
+  targetAmount: number | null;
+  color: string;
+  balance: number;
+  createdAt: string;
+};
+
+export type SavingTransaction = {
+  id: string;
+  savingId: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal';
+  description: string | null;
+  createdAt: string;
+};
+
+export type CreateSavingInput = { name: string; description?: string; targetAmount?: number; color?: string };
+export type AddTransactionInput = { amount: number; type: 'deposit' | 'withdrawal'; description?: string; createdAt?: string };
+
+export const savingService = {
+  list: () => api.get<Saving[]>('/savings').then((r) => r.data),
+  create: (data: CreateSavingInput) => api.post('/savings', data),
+  remove: (id: string) => api.delete(`/savings/${id}`),
+  addTransaction: (id: string, data: AddTransactionInput) => api.post(`/savings/${id}/transactions`, data),
+  listTransactions: (id: string) => api.get<SavingTransaction[]>(`/savings/${id}/transactions`).then((r) => r.data),
+};
+
 export const authService = {
   login: (data: LoginInput) => api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
   register: (data: RegisterInput) => api.post('/auth/register', data),

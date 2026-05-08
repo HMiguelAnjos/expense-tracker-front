@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import Incomes from './pages/Incomes';
 import Cards from './pages/Cards';
+import Savings from './pages/Savings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -26,6 +27,7 @@ export default function App() {
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="incomes" element={<Incomes />} />
                 <Route path="cards" element={<Cards />} />
+                <Route path="savings" element={<Savings />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

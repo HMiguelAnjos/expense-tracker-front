@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { expenseService, incomeService } from '../services/api';
+import { expenseService, incomeService, savingService } from '../services/api';
 import StatCard from '../components/StatCard';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, PiggyBank } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -47,11 +47,13 @@ const PieTip = ({ active, payload }: any) => {
 export default function Dashboard() {
   const { data: expenses = [] } = useQuery({ queryKey: ['expenses'], queryFn: expenseService.list });
   const { data: incomes = [] } = useQuery({ queryKey: ['incomes'], queryFn: incomeService.list });
+  const { data: savings = [] } = useQuery({ queryKey: ['savings'], queryFn: savingService.list });
 
   const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
   const totalInc = incomes.reduce((s, i) => s + i.amount, 0);
   const balance = totalInc - totalExp;
   const savRate = totalInc > 0 ? ((balance / totalInc) * 100).toFixed(0) : '0';
+  const totalSaved = savings.reduce((s, v) => s + v.balance, 0);
 
   // Last 6 months area data
   const months: Record<string, { month: string; receitas: number; despesas: number }> = {};
@@ -93,7 +95,7 @@ export default function Dashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Stat cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         <StatCard
           title="Total Receitas" value={fmt(totalInc)}
           sub={`${incomes.length} lançamentos`}
@@ -113,6 +115,12 @@ export default function Dashboard() {
           accent={balance >= 0 ? '#6366f1' : '#f43f5e'}
           accentTo={balance >= 0 ? '#8b5cf6' : '#e11d48'}
           delay={2}
+        />
+        <StatCard
+          title="Total em Poupança" value={fmt(totalSaved)}
+          sub={`${savings.length} ${savings.length === 1 ? 'reserva' : 'reservas'}`}
+          icon={<PiggyBank size={20} color="white" />}
+          accent="#22c55e" accentTo="#16a34a" delay={3}
         />
       </div>
 
