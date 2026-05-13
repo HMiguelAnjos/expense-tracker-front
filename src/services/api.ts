@@ -121,6 +121,59 @@ export const savingService = {
   listTransactions: (id: string) => api.get<SavingTransaction[]>(`/savings/${id}/transactions`).then((r) => r.data),
 };
 
+export type CardBill = {
+  id: string;
+  cardId: string;
+  cardName: string;
+  cardColor: string;
+  amount: number;
+  month: number;
+  year: number;
+  dueDate: string | null;
+  expenseId: string | null;
+  createdAt: string;
+  itemsCount: number;
+  itemsTotal: number;
+};
+
+export type CardBillItem = {
+  id: string;
+  cardBillId: string;
+  description: string;
+  amount: number;
+  category: string;
+  installments: number;
+  installmentNumber: number;
+  createdAt: string;
+};
+
+export type CreateCardBillInput = {
+  cardId: string;
+  cardName: string;
+  amount: number;
+  month: number;
+  year: number;
+  dueDate?: string;
+};
+
+export type AddBillItemInput = {
+  description: string;
+  totalAmount: number;
+  category: string;
+  installments?: number;
+};
+
+export const cardBillService = {
+  list: () => api.get<CardBill[]>('/card-bills').then((r) => r.data),
+  create: (data: CreateCardBillInput) => api.post<{ id: string }>('/card-bills', data).then((r) => r.data),
+  updateAmount: (id: string, amount: number, cardName: string) =>
+    api.patch(`/card-bills/${id}/amount`, { amount, cardName }),
+  remove: (id: string) => api.delete(`/card-bills/${id}`),
+  listItems: (id: string) => api.get<CardBillItem[]>(`/card-bills/${id}/items`).then((r) => r.data),
+  addItem: (id: string, data: AddBillItemInput) => api.post(`/card-bills/${id}/items`, data),
+  removeItem: (billId: string, itemId: string) => api.delete(`/card-bills/${billId}/items/${itemId}`),
+};
+
 export const authService = {
   login: (data: LoginInput) => api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
   register: (data: RegisterInput) => api.post('/auth/register', data),

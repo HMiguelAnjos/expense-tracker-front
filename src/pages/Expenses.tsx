@@ -6,13 +6,7 @@ import { z } from 'zod';
 import { Plus, Pencil, Trash2, Search, TrendingDown, CreditCard, Banknote, Smartphone, ArrowLeftRight } from 'lucide-react';
 import { expenseService, cardService, type Expense, type CreateExpenseInput } from '../services/api';
 import Modal from '../components/Modal';
-
-const CATEGORIES = ['Alimentação','Transporte','Moradia','Saúde','Educação','Lazer','Vestuário','Tecnologia','Fatura do Cartão','Outros'];
-const CAT_COLOR: Record<string, string> = {
-  Alimentação:'#f59e0b', Transporte:'#3b82f6', Moradia:'#8b5cf6',
-  Saúde:'#ec4899', Educação:'#10b981', Lazer:'#f97316',
-  Vestuário:'#06b6d4', Tecnologia:'#6366f1', 'Fatura do Cartão':'#f43f5e', Outros:'#64748b',
-};
+import { CATEGORIES, CAT_COLOR } from '../constants/categories';
 
 const PAYMENT_METHODS = [
   { value: 'pix',         label: 'PIX',                  icon: Smartphone },
