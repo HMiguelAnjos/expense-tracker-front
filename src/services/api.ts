@@ -163,6 +163,8 @@ export type AddBillItemInput = {
   installments?: number;
 };
 
+export type UpdateBillItemInput = { description: string; amount: number; category: string };
+
 export const cardBillService = {
   list: () => api.get<CardBill[]>('/card-bills').then((r) => r.data),
   create: (data: CreateCardBillInput) => api.post<{ id: string }>('/card-bills', data).then((r) => r.data),
@@ -172,6 +174,24 @@ export const cardBillService = {
   listItems: (id: string) => api.get<CardBillItem[]>(`/card-bills/${id}/items`).then((r) => r.data),
   addItem: (id: string, data: AddBillItemInput) => api.post(`/card-bills/${id}/items`, data),
   removeItem: (billId: string, itemId: string) => api.delete(`/card-bills/${billId}/items/${itemId}`),
+  updateItem: (billId: string, itemId: string, data: UpdateBillItemInput) =>
+    api.patch(`/card-bills/${billId}/items/${itemId}`, data),
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  color: string;
+  userId: string;
+  createdAt: string;
+};
+
+export type CreateCategoryInput = { name: string; color?: string };
+
+export const categoryService = {
+  list: () => api.get<Category[]>('/categories').then((r) => r.data),
+  create: (data: CreateCategoryInput) => api.post('/categories', data),
+  remove: (id: string) => api.delete(`/categories/${id}`),
 };
 
 export const authService = {

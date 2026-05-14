@@ -4,9 +4,8 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Plus, Pencil, Trash2, Search, TrendingDown, CreditCard, Banknote, Smartphone, ArrowLeftRight } from 'lucide-react';
-import { expenseService, cardService, type Expense, type CreateExpenseInput } from '../services/api';
+import { expenseService, cardService, categoryService, type Expense, type CreateExpenseInput } from '../services/api';
 import Modal from '../components/Modal';
-import { CATEGORIES, CAT_COLOR } from '../constants/categories';
 
 const PAYMENT_METHODS = [
   { value: 'pix',         label: 'PIX',                  icon: Smartphone },
@@ -53,6 +52,9 @@ export default function Expenses() {
 
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: expenseService.list });
   const { data: cards = [] } = useQuery({ queryKey: ['cards'], queryFn: cardService.list });
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: categoryService.list });
+
+  const catColorMap: Record<string, string> = Object.fromEntries(categories.map((c) => [c.name, c.color]));
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema) as any,
@@ -192,7 +194,7 @@ export default function Expenses() {
             </thead>
             <tbody>
               {filtered.map((e) => {
-                const color = CAT_COLOR[e.category] || '#64748b';
+                const color = catColorMap[e.category] || '#64748b';
                 return (
                   <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.12s' }}
                     onMouseEnter={(r) => { (r.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)'; }}
@@ -259,7 +261,7 @@ export default function Expenses() {
             <Field label="Categoria" error={errors.category?.message}>
               <select {...register('category')} style={inputSt}>
                 <option value="">Selecione...</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </Field>
 

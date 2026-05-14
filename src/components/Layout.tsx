@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, TrendingDown, TrendingUp, Sparkles, LogOut, CreditCard, PiggyBank, Receipt } from 'lucide-react';
+import { LayoutDashboard, TrendingDown, TrendingUp, Sparkles, LogOut, CreditCard, PiggyBank, Receipt, Tag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/cards', label: 'Cartões', icon: CreditCard, end: false },
   { to: '/faturas', label: 'Faturas', icon: Receipt, end: false },
   { to: '/savings', label: 'Poupança', icon: PiggyBank, end: false },
+  { to: '/categories', label: 'Categorias', icon: Tag, end: false },
 ];
 
 export default function Layout() {

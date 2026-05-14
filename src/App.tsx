@@ -9,6 +9,7 @@ import Incomes from './pages/Incomes';
 import Cards from './pages/Cards';
 import Savings from './pages/Savings';
 import Faturas from './pages/Faturas';
+import Categories from './pages/Categories';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="cards" element={<Cards />} />
                 <Route path="faturas" element={<Faturas />} />
                 <Route path="savings" element={<Savings />} />
+                <Route path="categories" element={<Categories />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
