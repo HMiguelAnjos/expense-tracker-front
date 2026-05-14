@@ -20,7 +20,7 @@ const createSchema = z.object({
 type CreateForm = z.infer<typeof createSchema>;
 
 const txSchema = z.object({
-  amount: z.number({ invalid_type_error: 'Informe um valor' }).positive('Deve ser positivo'),
+  amount: z.coerce.number().positive('Informe um valor positivo'),
   type: z.enum(['deposit', 'withdrawal']),
   description: z.string().optional(),
   createdAt: z.string().optional(),

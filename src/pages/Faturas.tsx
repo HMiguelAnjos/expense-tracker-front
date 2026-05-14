@@ -36,18 +36,18 @@ const errStyle: React.CSSProperties   = { fontSize: 11, color: '#f43f5e', margin
 /* ── schemas ── */
 const billSchema = z.object({
   cardId:  z.string().min(1, 'Selecione um cartão'),
-  amount:  z.coerce.number().positive('Informe um valor'),
-  month:   z.coerce.number().min(1).max(12),
-  year:    z.coerce.number().min(2020).max(2099),
+  amount:  z.number({ invalid_type_error: 'Informe um valor' }).positive('Informe um valor'),
+  month:   z.number().min(1).max(12),
+  year:    z.number().min(2020).max(2099),
   dueDate: z.string().optional(),
 });
 type BillForm = z.infer<typeof billSchema>;
 
 const itemSchema = z.object({
   description:  z.string().min(1, 'Descrição obrigatória'),
-  totalAmount:  z.coerce.number().positive('Informe um valor'),
+  totalAmount:  z.number({ invalid_type_error: 'Informe um valor' }).positive('Informe um valor'),
   category:     z.string().min(1, 'Categoria obrigatória'),
-  installments: z.coerce.number().int().min(1).max(48).optional(),
+  installments: z.number().int().min(1).max(48).optional(),
 });
 type ItemForm = z.infer<typeof itemSchema>;
 
@@ -409,7 +409,7 @@ export default function Faturas() {
                               <div>
                                 <label style={labelStyle}>Valor total (R$) *</label>
                                 <input
-                                  {...regI('totalAmount')}
+                                  {...regI('totalAmount', { valueAsNumber: true })}
                                   type="number" step="0.01" placeholder="0,00"
                                   style={inputStyle}
                                   onFocus={(e) => e.target.select()}
@@ -420,7 +420,7 @@ export default function Faturas() {
                               <div>
                                 <label style={labelStyle}>Parcelas</label>
                                 <input
-                                  {...regI('installments')}
+                                  {...regI('installments', { valueAsNumber: true })}
                                   type="number" min={1} max={48} placeholder="1"
                                   style={inputStyle}
                                   onFocus={(e) => e.target.select()}
@@ -508,7 +508,7 @@ export default function Faturas() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={labelStyle}>Mês *</label>
-                  <select {...regB('month')} style={{ ...inputStyle, appearance: 'none' }}>
+                  <select {...regB('month', { valueAsNumber: true })} style={{ ...inputStyle, appearance: 'none' }}>
                     {MONTHS.map((m, i) => (
                       <option key={m} value={i + 1}>{m}</option>
                     ))}
@@ -516,7 +516,7 @@ export default function Faturas() {
                 </div>
                 <div>
                   <label style={labelStyle}>Ano *</label>
-                  <input {...regB('year')} type="number" min={2020} max={2099} style={inputStyle} />
+                  <input {...regB('year', { valueAsNumber: true })} type="number" min={2020} max={2099} style={inputStyle} />
                   {eB.year && <div style={errStyle}>{eB.year.message}</div>}
                 </div>
               </div>
@@ -524,7 +524,7 @@ export default function Faturas() {
               <div>
                 <label style={labelStyle}>Valor total da fatura (R$) *</label>
                 <input
-                  {...regB('amount')}
+                  {...regB('amount', { valueAsNumber: true })}
                   type="number" step="0.01" placeholder="0,00"
                   style={inputStyle}
                   onFocus={(e) => e.target.select()}
