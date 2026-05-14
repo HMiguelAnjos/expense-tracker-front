@@ -20,7 +20,7 @@ const createSchema = z.object({
 type CreateForm = z.infer<typeof createSchema>;
 
 const txSchema = z.object({
-  amount: z.coerce.number().positive('Informe um valor positivo'),
+  amount: z.number().positive('Informe um valor positivo'),
   type: z.enum(['deposit', 'withdrawal']),
   description: z.string().optional(),
   createdAt: z.string().optional(),
@@ -447,7 +447,7 @@ export default function Savings() {
               <div>
                 <label style={labelStyle}>Valor (R$) *</label>
                 <input
-                  {...regTx('amount', { setValueAs: (v) => v === '' ? '' : Number(v) })}
+                  {...regTx('amount', { valueAsNumber: true })}
                   type="number" step="0.01" placeholder="0,00"
                   style={inputStyle}
                   onFocus={(e) => e.target.select()}

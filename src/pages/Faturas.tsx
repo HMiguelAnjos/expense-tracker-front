@@ -21,9 +21,6 @@ const MONTHS = [
 ];
 const SHORT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-function monthLabel(month: number, year: number) {
-  return `${SHORT_MONTHS[month - 1]}/${year}`;
-}
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 10,
@@ -36,7 +33,7 @@ const errStyle: React.CSSProperties   = { fontSize: 11, color: '#f43f5e', margin
 /* ── schemas ── */
 const billSchema = z.object({
   cardId:  z.string().min(1, 'Selecione um cartão'),
-  amount:  z.number({ invalid_type_error: 'Informe um valor' }).positive('Informe um valor'),
+  amount:  z.number().positive('Informe um valor'),
   month:   z.number().min(1).max(12),
   year:    z.number().min(2020).max(2099),
   dueDate: z.string().optional(),
@@ -45,7 +42,7 @@ type BillForm = z.infer<typeof billSchema>;
 
 const itemSchema = z.object({
   description:  z.string().min(1, 'Descrição obrigatória'),
-  totalAmount:  z.number({ invalid_type_error: 'Informe um valor' }).positive('Informe um valor'),
+  totalAmount:  z.number().positive('Informe um valor'),
   category:     z.string().min(1, 'Categoria obrigatória'),
   installments: z.number().int().min(1).max(48).optional(),
 });
@@ -61,7 +58,6 @@ export default function Faturas() {
   const [selectedCard, setSelectedCard] = useState<string | 'all'>('all');
   const [showBillModal, setShowBillModal] = useState(false);
   const [expandedBill, setExpandedBill] = useState<string | null>(null);
-  const [itemsBill, setItemsBill] = useState<CardBill | null>(null);
   const [billItems, setBillItems] = useState<Record<string, CardBillItem[]>>({});
   const [editingAmount, setEditingAmount] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState('');
