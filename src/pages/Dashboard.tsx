@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { expenseService, incomeService, savingService } from '../services/api';
 import StatCard from '../components/StatCard';
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, PiggyBank } from 'lucide-react';
+import {
+  TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
+  PiggyBank, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -10,7 +14,12 @@ import {
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e'];
+const MONTHS = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#06b6d4', '#a855f7'];
 
 const ChartTip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -44,18 +53,39 @@ const PieTip = ({ active, payload }: any) => {
   );
 };
 
-export default function Dashboard() {
-  const { data: expenses = [] } = useQuery({ queryKey: ['expenses'], queryFn: expenseService.list });
-  const { data: incomes = [] } = useQuery({ queryKey: ['incomes'], queryFn: incomeService.list });
-  const { data: savings = [] } = useQuery({ queryKey: ['savings'], queryFn: savingService.list });
+function prevMonth(m: number, y: number) {
+  return m === 0 ? { m: 11, y: y - 1 } : { m: m - 1, y };
+}
+function nextMonth(m: number, y: number) {
+  return m === 11 ? { m: 0, y: y + 1 } : { m: m + 1, y };
+}
 
-  const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalInc = incomes.reduce((s, i) => s + i.amount, 0);
-  const balance = totalInc - totalExp;
-  const savRate = totalInc > 0 ? ((balance / totalInc) * 100).toFixed(0) : '0';
+export default function Dashboard() {
+  const now = new Date();
+  const [filterMonth, setFilterMonth] = useState(now.getMonth());   // 0-indexed
+  const [filterYear,  setFilterYear]  = useState(now.getFullYear());
+
+  const { data: expenses = [] } = useQuery({ queryKey: ['expenses'], queryFn: expenseService.list });
+  const { data: incomes  = [] } = useQuery({ queryKey: ['incomes'],  queryFn: incomeService.list });
+  const { data: savings  = [] } = useQuery({ queryKey: ['savings'],  queryFn: savingService.list });
+
+  /* ── filtered data for the selected month ── */
+  const filteredExp = expenses.filter((e) => {
+    const d = new Date(e.createdAt);
+    return d.getMonth() === filterMonth && d.getFullYear() === filterYear;
+  });
+  const filteredInc = incomes.filter((i) => {
+    const d = new Date(i.createdAt);
+    return d.getMonth() === filterMonth && d.getFullYear() === filterYear;
+  });
+
+  const totalExp  = filteredExp.reduce((s, e) => s + e.amount, 0);
+  const totalInc  = filteredInc.reduce((s, i) => s + i.amount, 0);
+  const balance   = totalInc - totalExp;
+  const savRate   = totalInc > 0 ? ((balance / totalInc) * 100).toFixed(0) : '0';
   const totalSaved = savings.reduce((s, v) => s + v.balance, 0);
 
-  // Last 6 months area data
+  /* ── Last 6 months area (NOT filtered — always shows trend) ── */
   const months: Record<string, { month: string; receitas: number; despesas: number }> = {};
   for (let i = 5; i >= 0; i--) {
     const d = new Date(); d.setMonth(d.getMonth() - i);
@@ -74,42 +104,92 @@ export default function Dashboard() {
   });
   const areaData = Object.values(months);
 
-  // Category donut
-  const byCat = expenses.reduce<Record<string, number>>((a, e) => ({ ...a, [e.category]: (a[e.category] || 0) + e.amount }), {});
-  const catData = Object.entries(byCat).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  /* ── Category donut — filtered ── */
+  const byCat = filteredExp.reduce<Record<string, number>>(
+    (a, e) => ({ ...a, [e.category]: (a[e.category] || 0) + e.amount }), {}
+  );
+  const catData = Object.entries(byCat)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
 
-  // Recent
+  /* ── Recent transactions — filtered ── */
   const recent = [
-    ...expenses.map((e) => ({ id: e.id, type: 'exp' as const, label: e.title, sub: e.category, amount: e.amount, date: e.createdAt })),
-    ...incomes.map((i) => ({ id: i.id, type: 'inc' as const, label: i.description, sub: i.source, amount: i.amount, date: i.createdAt })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 7);
+    ...filteredExp.map((e) => ({ id: e.id, type: 'exp' as const, label: e.title, sub: e.category, amount: e.amount, date: e.createdAt })),
+    ...filteredInc.map((i) => ({ id: i.id, type: 'inc' as const, label: i.description, sub: i.source, amount: i.amount, date: i.createdAt })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8);
 
-  const card = (s: string) => ({
-    background: s,
-    borderRadius: 18,
+  const card = (s: string): React.CSSProperties => ({
+    background: s, borderRadius: 18,
     border: '1px solid rgba(255,255,255,0.06)',
     padding: '22px 24px',
   });
 
+  const navBtn: React.CSSProperties = {
+    width: 32, height: 32, borderRadius: 9,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    cursor: 'pointer', color: '#64748b',
+  };
+
+  const isCurrentMonth = filterMonth === now.getMonth() && filterYear === now.getFullYear();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── Month filter ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.02em' }}>Dashboard</div>
+          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Visão geral do seu financeiro</div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            style={navBtn}
+            onClick={() => { const p = prevMonth(filterMonth, filterYear); setFilterMonth(p.m); setFilterYear(p.y); }}
+          ><ChevronLeft size={16} /></button>
+
+          <div style={{ textAlign: 'center', minWidth: 150 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>
+              {MONTHS[filterMonth]}
+            </div>
+            <div style={{ fontSize: 11, color: '#475569' }}>{filterYear}</div>
+          </div>
+
+          <button
+            style={navBtn}
+            onClick={() => { const n = nextMonth(filterMonth, filterYear); setFilterMonth(n.m); setFilterYear(n.y); }}
+          ><ChevronRight size={16} /></button>
+
+          {!isCurrentMonth && (
+            <button
+              onClick={() => { setFilterMonth(now.getMonth()); setFilterYear(now.getFullYear()); }}
+              style={{
+                padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
+                color: '#818cf8',
+              }}
+            >Hoje</button>
+          )}
+        </div>
+      </div>
 
       {/* ── Stat cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         <StatCard
           title="Total Receitas" value={fmt(totalInc)}
-          sub={`${incomes.length} lançamentos`}
+          sub={`${filteredInc.length} lançamento${filteredInc.length !== 1 ? 's' : ''}`}
           icon={<TrendingUp size={20} color="white" />}
           accent="#10b981" accentTo="#059669" delay={0}
         />
         <StatCard
           title="Total Despesas" value={fmt(totalExp)}
-          sub={`${expenses.length} lançamentos`}
+          sub={`${filteredExp.length} lançamento${filteredExp.length !== 1 ? 's' : ''}`}
           icon={<TrendingDown size={20} color="white" />}
           accent="#f43f5e" accentTo="#e11d48" delay={1}
         />
         <StatCard
-          title="Saldo" value={fmt(balance)}
+          title="Saldo do Mês" value={fmt(balance)}
           sub={`Taxa de economia: ${savRate}%`}
           icon={<Wallet size={20} color="white" />}
           accent={balance >= 0 ? '#6366f1' : '#f43f5e'}
@@ -127,7 +207,7 @@ export default function Dashboard() {
       {/* ── Main row ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16 }}>
 
-        {/* Area chart */}
+        {/* Area chart — always shows last 6 months for trend */}
         <div className="fade-up fade-up-4" style={card('#0d1117')}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
@@ -165,13 +245,15 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Donut */}
+        {/* Category donut — filtered */}
         <div className="fade-up fade-up-4" style={card('#0d1117')}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>Por Categoria</div>
-          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 16 }}>Distribuição dos gastos</div>
+          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 16 }}>
+            {MONTHS[filterMonth]} {filterYear}
+          </div>
           {catData.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#374151', fontSize: 13 }}>
-              Nenhum dado
+              Nenhum gasto neste mês
             </div>
           ) : (
             <>
@@ -197,18 +279,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Recent transactions ── */}
+      {/* ── Recent transactions — filtered ── */}
       <div className="fade-up fade-up-5" style={card('#0d1117')}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Transações Recentes</div>
-            <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>Últimas movimentações registradas</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Transações do Mês</div>
+            <div style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>
+              {MONTHS[filterMonth]} {filterYear}
+            </div>
           </div>
           <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 500 }}>{recent.length} registros</div>
         </div>
 
         {recent.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px 0', color: '#374151', fontSize: 13 }}>Nenhuma transação ainda</div>
+          <div style={{ textAlign: 'center', padding: '32px 0', color: '#374151', fontSize: 13 }}>
+            Nenhuma transação em {MONTHS[filterMonth]}
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {recent.map((t) => (
@@ -216,8 +302,7 @@ export default function Dashboard() {
                 key={`${t.type}-${t.id}`}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '11px 12px', borderRadius: 12,
-                  transition: 'background 0.15s',
+                  padding: '11px 12px', borderRadius: 12, transition: 'background 0.15s',
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.03)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
@@ -235,7 +320,7 @@ export default function Dashboard() {
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{t.label}</div>
                     <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>
-                      {t.sub} &nbsp;·&nbsp; {new Date(t.date).toLocaleDateString('pt-BR')}
+                      {t.sub} · {new Date(t.date).toLocaleDateString('pt-BR')}
                     </div>
                   </div>
                 </div>
