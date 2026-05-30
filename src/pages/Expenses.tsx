@@ -3,9 +3,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Pencil, Trash2, Search, TrendingDown, CreditCard, Banknote, Smartphone, ArrowLeftRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, TrendingDown, CreditCard, Banknote, Smartphone, ArrowLeftRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { expenseService, cardService, categoryService, type Expense, type CreateExpenseInput } from '../services/api';
 import Modal from '../components/Modal';
+
+const MONTHS = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+function prevMonth(m: number, y: number) {
+  return m === 0 ? { m: 11, y: y - 1 } : { m: m - 1, y };
+}
+function nextMonth(m: number, y: number) {
+  return m === 11 ? { m: 0, y: y + 1 } : { m: m + 1, y };
+}
 
 const PAYMENT_METHODS = [
   { value: 'pix',         label: 'PIX',                  icon: Smartphone },
@@ -45,10 +57,13 @@ const inputSt: React.CSSProperties = {
 };
 
 export default function Expenses() {
+  const now = new Date();
   const qc = useQueryClient();
   const [modal, setModal] = useState<'create' | 'edit' | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [search, setSearch] = useState('');
+  const [filterMonth, setFilterMonth] = useState(now.getMonth());
+  const [filterYear,  setFilterYear]  = useState(now.getFullYear());
 
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses'], queryFn: expenseService.list });
   const { data: cards = [] } = useQuery({ queryKey: ['cards'], queryFn: cardService.list });
@@ -108,11 +123,22 @@ export default function Expenses() {
     else create.mutate(payload);
   }
 
-  const filtered = expenses.filter((e) =>
+  const monthFiltered = expenses.filter((e) => {
+    const d = new Date(e.createdAt);
+    return d.getMonth() === filterMonth && d.getFullYear() === filterYear;
+  });
+  const filtered = monthFiltered.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase()) ||
     e.category.toLowerCase().includes(search.toLowerCase())
   );
-  const total = expenses.reduce((s, e) => s + e.amount, 0);
+  const total = monthFiltered.reduce((s, e) => s + e.amount, 0);
+  const isCurrentMonth = filterMonth === now.getMonth() && filterYear === now.getFullYear();
+  const navBtn: React.CSSProperties = {
+    width: 32, height: 32, borderRadius: 9,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    cursor: 'pointer', color: '#64748b',
+  };
 
   function installmentLabel(e: Expense) {
     if (e.installments > 1) return `${e.installmentNumber}/${e.installments}`;
@@ -146,21 +172,43 @@ export default function Expenses() {
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.02em' }}>Despesas</h1>
           <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-            {expenses.length} lançamentos &nbsp;·&nbsp; Total: <span style={{ color: '#f43f5e', fontWeight: 600 }}>{fmt(total)}</span>
+            {monthFiltered.length} lançamento{monthFiltered.length !== 1 ? 's' : ''} em {MONTHS[filterMonth]} &nbsp;·&nbsp; Total: <span style={{ color: '#f43f5e', fontWeight: 600 }}>{fmt(total)}</span>
           </p>
         </div>
-        <button onClick={() => open()} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 20px', borderRadius: 12, border: 'none', cursor: 'pointer',
-          fontSize: 13, fontWeight: 600, color: 'white',
-          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-          boxShadow: '0 4px 14px rgba(99,102,241,0.35)', transition: 'all 0.2s',
-        }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
-        >
-          <Plus size={15} /> Nova Despesa
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Month navigator */}
+          <button style={navBtn} onClick={() => { const p = prevMonth(filterMonth, filterYear); setFilterMonth(p.m); setFilterYear(p.y); }}>
+            <ChevronLeft size={16} />
+          </button>
+          <div style={{ textAlign: 'center', minWidth: 130 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{MONTHS[filterMonth]}</div>
+            <div style={{ fontSize: 11, color: '#475569' }}>{filterYear}</div>
+          </div>
+          <button style={navBtn} onClick={() => { const n = nextMonth(filterMonth, filterYear); setFilterMonth(n.m); setFilterYear(n.y); }}>
+            <ChevronRight size={16} />
+          </button>
+          {!isCurrentMonth && (
+            <button
+              onClick={() => { setFilterMonth(now.getMonth()); setFilterYear(now.getFullYear()); }}
+              style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
+            >Hoje</button>
+          )}
+
+          {/* New expense button */}
+          <button onClick={() => open()} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            fontSize: 13, fontWeight: 600, color: 'white',
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+            boxShadow: '0 4px 14px rgba(99,102,241,0.35)', transition: 'all 0.2s',
+          }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
+          >
+            <Plus size={15} /> Nova Despesa
+          </button>
+        </div>
       </div>
 
       {/* Table card */}
@@ -179,7 +227,7 @@ export default function Expenses() {
             <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(99,102,241,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <TrendingDown size={24} color="#4f46e5" />
             </div>
-            <div style={{ fontSize: 13, color: '#374151' }}>{search ? 'Nenhum resultado' : 'Nenhuma despesa cadastrada'}</div>
+            <div style={{ fontSize: 13, color: '#374151' }}>{search ? 'Nenhum resultado' : `Nenhuma despesa em ${MONTHS[filterMonth]}`}</div>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
